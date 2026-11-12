@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-8 8 690 108" role="img" aria-label="aLocateUCB">
+  <title>aLocateUCB</title>
+  <!-- Para fondos oscuros (el Manual de Marca UCB indica cambiar el azul por blanco, nunca por otro color). -->
+  <g fill="none" stroke="#FFFFFF" stroke-linecap="round" stroke-linejoin="round">
+    <g stroke-width="12">
+      <circle cx="28" cy="72" r="22"/>
+      <path d="M50 50V94"/>
+      <path d="M78 26V94H112"/>
+      <path d="M233.56 56.44A22 22 0 1 0 233.56 87.56"/>
+      <circle cx="282" cy="72" r="22"/>
+      <path d="M304 50V94"/>
+      <path d="M336 30V80Q336 94 350 94H356"/>
+      <path d="M322 50H352"/>
+      <path d="M372 72H416A22 22 0 1 0 409.56 87.56"/>
+    </g>
+    <g stroke-width="17">
+      <path d="M449 29V68A23 23 0 0 0 495 68V29"/>
+      <path d="M579.92 38.08A31 31 0 1 0 579.92 81.92"/>
+      <path d="M610 29V91M610 29H630A15.5 15.5 0 0 1 630 60H610M610 60H634A15.5 15.5 0 0 1 634 91H610"/>
+    </g>
+  </g>
+  <path fill="#FFCC00" fill-rule="evenodd"
+    d="M156 102C156 102 130 76 130 58A26 26 0 1 1 182 58C182 76 156 102 156 102ZM166 58A10 10 0 1 0 146 58A10 10 0 1 0 166 58Z"/>
+</svg>

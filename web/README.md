@@ -28,9 +28,9 @@ Tienes **3 formas sencillas** de integrar tus datos de grafo una vez que los ten
 ### Opción 1: Proporcionármelo directamente en el chat
 Puedes compartir el contenido de tu archivo (JSON, lista de nodos/aristas, o script) y yo lo integraré de inmediato en [graph-data.js](file:///c:/Desktop/pWm/graph-data.js).
 
-### Opción 2: Botón "Cargar Grafo" en la barra superior
+### Opción 2: Menú → "Cargar grafo"
 1. Abre la página en el navegador.
-2. Haz clic en el botón dorado **"🔄 Cargar Grafo"** en el encabezado.
+2. Toca el botón de menú (☰) de la barra superior y elige **"Cargar grafo"**.
 3. Pega tu estructura JSON y haz clic en **"Aplicar al Mapa"**. El mapa, los selectores y el algoritmo se actualizarán en tiempo real.
 
 ### Opción 3: Editar directamente `graph-data.js`

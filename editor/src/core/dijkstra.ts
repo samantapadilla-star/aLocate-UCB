@@ -60,7 +60,12 @@ class MinHeap {
  * su recorrido (con giros) en píxeles; la escala solo se aplica al mostrar el resultado.
  * Las conexiones son bidireccionales.
  */
-export function shortestPath(floor: Floor, originId: string, destId: string): RouteResult {
+export interface RouteOptions {
+  /** Ruta accesible: no usa tramos de tipo «escaleras». */
+  avoidStairs?: boolean;
+}
+
+export function shortestPath(floor: Floor, originId: string, destId: string, opts: RouteOptions = {}): RouteResult {
   const nodes = buildNodeMap(floor);
   if (!nodes.has(originId) || !nodes.has(destId)) return { found: false, reason: 'unknown-node' };
   if (originId === destId) return { found: true, nodeIds: [originId], steps: [], totalPx: 0 };
@@ -68,6 +73,7 @@ export function shortestPath(floor: Floor, originId: string, destId: string): Ro
   const adjacency = new Map<string, { edgeId: string; to: string; w: number }[]>();
   for (const e of floor.edges) {
     if (!nodes.has(e.a) || !nodes.has(e.b)) continue;
+    if (opts.avoidStairs && e.kind === 'escaleras') continue;
     const w = edgeLengthPx(e, nodes);
     (adjacency.get(e.a) ?? adjacency.set(e.a, []).get(e.a)!).push({ edgeId: e.id, to: e.b, w });
     (adjacency.get(e.b) ?? adjacency.set(e.b, []).get(e.b)!).push({ edgeId: e.id, to: e.a, w });

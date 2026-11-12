@@ -313,7 +313,7 @@ export default function MapCanvas(props: MapCanvasProps) {
               return (
                 <g key={edge.id}>
                   <polyline points={pts} fill="none" vectorEffect="non-scaling-stroke"
-                    className={`edge${sel ? ' selected' : ''}${inRoute ? ' route' : ''}`} />
+                    className={`edge kind-${edge.kind ?? 'camino'}${sel ? ' selected' : ''}${inRoute ? ' route' : ''}`} />
                   <polyline points={pts} fill="none" vectorEffect="non-scaling-stroke" data-edge-id={edge.id} className="edge-hit" />
                   {edge.waypoints.map((w, i) => (
                     <circle key={i} cx={w.x} cy={w.y} r={3 * k} className="turn-dot" />

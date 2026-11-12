@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "nota": "Catálogo editable a mano. 'pisos' es el número total de niveles contando la planta baja. 'piso' de un ambiente: 0 = planta baja. Solo se publican códigos de aula, no oficinas ni nombres de personas.",
+  "notaAscensores": "Cada ascensor: nombre, ubicacion (texto opcional, p. ej. 'junto a la escalera principal') y foto (ruta, p. ej. 'campus/fotos/ascensor-c.jpg'). La foto se muestra en el último paso cuando se activa 'Ruta accesible'.",
+  "bloques": {
+    "bloque-c": {
+      "pisos": 5,
+      "nombresPisos": ["Planta baja", "Piso 1", "Piso 2", "Piso 3", "Piso 4"],
+      "ascensores": [{ "nombre": "Ascensor del Bloque C", "ubicacion": null, "foto": null }]
+    },
+    "bloque-d": {
+      "pisos": 6,
+      "pisosAproximados": true,
+      "notaPisos": "Al menos planta baja + 5 pisos: la agenda ubica el Paraninfo en el 5to. piso. Confirmar el total.",
+      "nombresPisos": ["Planta baja", "Piso 1", "Piso 2", "Piso 3", "Piso 4", "Piso 5"],
+      "ascensores": [{ "nombre": "Ascensor del Bloque D", "ubicacion": null, "foto": null }]
+    }
+  },
+  "ambientes": [
+    { "codigo": "TEAL 001", "bloque": "bloque-c", "piso": 0 },
+    { "codigo": "TEAL 002", "bloque": "bloque-c", "piso": 0 },
+    { "codigo": "TEAL 003", "bloque": "bloque-c", "piso": 0 },
+    { "codigo": "TEAL 004", "bloque": "bloque-c", "piso": 0 },
+    { "codigo": "TEAL 005", "bloque": "bloque-c", "piso": 0 },
+    { "codigo": "C101", "bloque": "bloque-c", "piso": 1 },
+    { "codigo": "C102", "bloque": "bloque-c", "piso": 1 },
+    { "codigo": "C103", "bloque": "bloque-c", "piso": 1 },
+    { "codigo": "C104", "bloque": "bloque-c", "piso": 1 },
+    { "codigo": "C105", "bloque": "bloque-c", "piso": 1 },
+    { "codigo": "C106", "bloque": "bloque-c", "piso": 1 },
+    { "codigo": "C201", "bloque": "bloque-c", "piso": 2 },
+    { "codigo": "C202", "bloque": "bloque-c", "piso": 2 },
+    { "codigo": "C203", "bloque": "bloque-c", "piso": 2 },
+    { "codigo": "C204", "bloque": "bloque-c", "piso": 2 },
+    { "codigo": "C301", "bloque": "bloque-c", "piso": 3 },
+    { "codigo": "C302", "bloque": "bloque-c", "piso": 3 },
+    { "codigo": "C303", "bloque": "bloque-c", "piso": 3 },
+    { "codigo": "C304", "bloque": "bloque-c", "piso": 3 },
+    { "codigo": "C401", "bloque": "bloque-c", "piso": 4 },
+    { "codigo": "C402", "bloque": "bloque-c", "piso": 4 },
+    { "codigo": "C403", "bloque": "bloque-c", "piso": 4 },
+    { "codigo": "C404", "bloque": "bloque-c", "piso": 4 },
+    { "codigo": "Paraninfo", "bloque": "bloque-d", "piso": 5, "tipo": "auditorio", "alias": ["paraninfo", "paraninfo ucb"] }
+  ]
+}

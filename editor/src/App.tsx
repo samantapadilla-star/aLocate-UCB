@@ -5,12 +5,19 @@ import { buildDemoProject, DEMO_HEIGHT, DEMO_WIDTH } from './core/demo';
 import { dist, nearestSegmentIndex, round2 } from './core/geometry';
 import {
   addEdge, addNode, buildNodeMap, deleteEdge, deleteNode, edgeLengthPx, edgePolyline, formatLength,
-  metersPerPixel, moveNode, newId, renameNode, setCalibration, setWaypoints,
+  metersPerPixel, moveNode, newId, renameNode, setCalibration, setEdgeKind, setWaypoints,
 } from './core/graph';
 import {
   createProject, parseProject, primaryFloor, ProjectFormatError, renameProject, serializeProject, updateFloor,
 } from './core/project';
-import type { Floor, PlanRef, Point, Project } from './core/types';
+import { EDGE_KINDS, type EdgeKind, type Floor, type PlanRef, type Point, type Project } from './core/types';
+
+const EDGE_KIND_LABEL: Record<EdgeKind, string> = {
+  camino: 'Camino (sin desnivel)',
+  rampa: 'Rampa / camino accesible',
+  escaleras: 'Escaleras o gradas',
+  ascensor: 'Ascensor',
+};
 import type { ConnectDraft, Mode, Notice, Selection } from './editorTypes';
 import { useHistory } from './hooks/useHistory';
 import {
@@ -58,6 +65,7 @@ export default function App() {
   const [calibInput, setCalibInput] = useState('');
   const [origin, setOrigin] = useState<string | null>(null);
   const [dest, setDest] = useState<string | null>(null);
+  const [avoidStairs, setAvoidStairs] = useState(false);
   const [showLengths, setShowLengths] = useState(true);
   const [embed, setEmbed] = useState(true);
   const [notice, setNotice] = useState<Notice | null>(null);
@@ -77,8 +85,8 @@ export default function App() {
   const selEdge = selection?.type === 'edge' && floor ? floor.edges.find((e) => e.id === selection.id) ?? null : null;
 
   const route = useMemo(
-    () => (floor && originId && destId ? shortestPath(floor, originId, destId) : null),
-    [floor, originId, destId],
+    () => (floor && originId && destId ? shortestPath(floor, originId, destId, { avoidStairs }) : null),
+    [floor, originId, destId, avoidStairs],
   );
   const routeEdgeIds = useMemo(() => new Set(route?.found ? route.steps.map((s) => s.edgeId) : []), [route]);
   const routeNodeIds = useMemo(() => new Set(route?.found ? route.nodeIds : []), [route]);
@@ -453,10 +461,11 @@ export default function App() {
                     <button onClick={() => { setOrigin(destId); setDest(originId); }} disabled={!originId && !destId}>Intercambiar</button>
                     <button onClick={() => { setOrigin(null); setDest(null); }} disabled={!originId && !destId}>Limpiar</button>
                   </div>
+                  <label className="check"><input type="checkbox" checked={avoidStairs} onChange={(e) => setAvoidStairs(e.target.checked)} /> Ruta accesible (evitar escaleras)</label>
                   {route && !route.found && route.reason === 'no-path' && (
                     <div className="notice error" role="status">
-                      No hay ruta entre <b>{nm(originId!)}</b> y <b>{nm(destId!)}</b>: no existe una cadena de conexiones que los una.
-                      (Dos líneas que solo se cruzan no cuentan: deben compartir un nodo.)
+                      No hay ruta entre <b>{nm(originId!)}</b> y <b>{nm(destId!)}</b>{avoidStairs ? ' sin escaleras' : ''}: no existe una cadena de conexiones que los una.
+                      {avoidStairs ? ' Marca como «Rampa» o «Camino» el tramo accesible que falta.' : ' (Dos líneas que solo se cruzan no cuentan: deben compartir un nodo.)'}
                     </div>
                   )}
                   {route?.found && (
@@ -500,6 +509,12 @@ export default function App() {
                   <>
                     <p><b>{nm(selEdge.a)}</b> ↔ <b>{nm(selEdge.b)}</b></p>
                     <p>Longitud del recorrido: <b>{formatLength(edgeLengthPx(selEdge, nodes), mpp)}</b></p>
+                    <label className="field">Tipo de tramo
+                      <select value={selEdge.kind ?? 'camino'} onChange={(e) => mutate((f) => setEdgeKind(f, selEdge.id, e.target.value as EdgeKind))}>
+                        {EDGE_KINDS.map((k) => <option key={k} value={k}>{EDGE_KIND_LABEL[k]}</option>)}
+                      </select>
+                    </label>
+                    <p className="small muted">«Ruta accesible» no usa tramos de escaleras. Marca como «Rampa» el camino pensado para personas con discapacidad.</p>
                     <p className="small muted">{selEdge.waypoints.length} giro(s). En «Seleccionar / mover»: arrastra los puntos, doble clic en la línea para añadir uno, doble clic en un punto para quitarlo.</p>
                     <button className="danger" onClick={deleteSelection}>Eliminar conexión</button>
                   </>

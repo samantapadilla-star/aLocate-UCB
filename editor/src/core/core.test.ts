@@ -10,6 +10,7 @@ import {
   metersPerPixel,
   moveNode,
   setCalibration,
+  setEdgeKind,
 } from './graph';
 import { parseProject, primaryFloor, ProjectFormatError, serializeProject } from './project';
 import type { PlanRef } from './types';
@@ -130,13 +131,45 @@ describe('edición', () => {
   });
 });
 
+describe('tipos de tramo y ruta accesible', () => {
+  it('con «evitar escaleras» la ruta rodea el tramo de escaleras', () => {
+    // Marcamos B–C como escaleras: A→E deja de ir por B y pasa por D (82.36 m)
+    const f = setEdgeKind(demo(), 'demo-bc', 'escaleras');
+    const normal = shortestPath(f, 'demo-a', 'demo-e');
+    const acc = shortestPath(f, 'demo-a', 'demo-e', { avoidStairs: true });
+    expect(normal.found && normal.nodeIds).toEqual(['demo-a', 'demo-b', 'demo-c', 'demo-e']);
+    expect(acc.found && acc.nodeIds).toEqual(['demo-a', 'demo-d', 'demo-c', 'demo-e']);
+    expect(acc.found && acc.totalPx * 0.1).toBeCloseTo(82.3607, 3);
+  });
+  it('sin camino accesible no inventa una ruta', () => {
+    const f = setEdgeKind(demo(), 'demo-fg', 'escaleras');
+    expect(shortestPath(f, 'demo-f', 'demo-g', { avoidStairs: true })).toEqual({ found: false, reason: 'no-path' });
+  });
+  it('«camino» no se guarda (es el valor por defecto) y los demás tipos sí', () => {
+    let f = setEdgeKind(demo(), 'demo-ab', 'rampa');
+    expect(f.edges.find((e) => e.id === 'demo-ab')!.kind).toBe('rampa');
+    f = setEdgeKind(f, 'demo-ab', 'camino');
+    expect('kind' in f.edges.find((e) => e.id === 'demo-ab')!).toBe(false);
+  });
+  it('guarda y lee el tipo de tramo; abre archivos v1 y rechaza tipos desconocidos', () => {
+    const p = buildDemoProject(plan);
+    p.buildings[0].floors[0] = setEdgeKind(p.buildings[0].floors[0], 'demo-bc', 'escaleras');
+    const back = parseProject(serializeProject(p));
+    expect(primaryFloor(back.project).edges.find((e) => e.id === 'demo-bc')!.kind).toBe('escaleras');
+    const v1 = JSON.parse(serializeProject(buildDemoProject(plan))); v1.version = 1;
+    expect(() => parseProject(JSON.stringify(v1))).not.toThrow();
+    const bad = JSON.parse(serializeProject(buildDemoProject(plan))); bad.buildings[0].floors[0].edges[0].kind = 'tobogan';
+    expect(() => parseProject(JSON.stringify(bad))).toThrow(/Tipo de tramo/);
+  });
+});
+
 describe('guardado e importación', () => {
   it('ida y vuelta sin pérdida (sin imagen incrustada)', () => {
     const p = buildDemoProject(plan);
     const { project, embedded } = parseProject(serializeProject(p));
     expect(embedded).toEqual({});
     expect(project.buildings).toEqual(p.buildings);
-    expect(project.version).toBe(1);
+    expect(project.version).toBe(2);
     expect(primaryFloor(project).plan).toEqual(plan);
   });
   it('conserva la imagen incrustada aparte del modelo', () => {

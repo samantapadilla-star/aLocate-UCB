@@ -107,6 +107,10 @@ ol.steps li b { float: right; }
 .calib-old line, .calib-new line { stroke-width: 2; stroke-dasharray: 8 5; }
 .calib-old line { stroke: #7c3aed; } .calib-old circle { fill: #7c3aed; } .calib-old text { fill: #5b21b6; paint-order: stroke; stroke: #fff; stroke-width: 3px; font-weight: 700; }
 .calib-new line { stroke: #db2777; } .calib-new circle, .calib-new-dot { fill: #db2777; } .calib-new text { fill: #9d174d; paint-order: stroke; stroke: #fff; stroke-width: 3px; font-weight: 700; }
+/* Tipos de tramo: escaleras (rojo punteado), rampa accesible (verde), ascensor (cian punteado) */
+.edge.kind-escaleras { stroke: #c0392b; stroke-dasharray: 6 4; }
+.edge.kind-rampa { stroke: #1b7f4b; stroke-width: 4; }
+.edge.kind-ascensor { stroke: #0891b2; stroke-dasharray: 2 4; stroke-width: 4; }
 
 @media (max-width: 860px) {
   .main { grid-template-columns: 1fr; grid-template-rows: minmax(55vh, 1fr) auto; overflow-y: auto; }

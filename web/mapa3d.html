@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#005289">
+  <title>aLocateUCB · Mapa 2D / 3D (prototipo)</title>
+  <meta name="description" content="Prototipo del mapa real del campus que pasa de 2D a 3D, con ruta animada y chat de demostración.">
+  <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="mapa3d.css">
+  <script type="importmap">
+    { "imports": { "three": "./vendor/three/three.module.min.js" } }
+  </script>
+</head>
+
+<body>
+  <div class="app" id="app">
+
+    <!-- ============ ESCENA (2D / 3D) ============ -->
+    <div class="map-layer stage" id="stage">
+      <canvas id="gl" aria-label="Mapa del campus en 2D y 3D" role="img"></canvas>
+      <div id="labels" aria-hidden="true"></div>
+
+      <div class="node-pop" id="nodePop" hidden role="dialog" aria-label="Detalle del lugar">
+        <button class="pop-close" id="popClose" aria-label="Cerrar" data-icon="close"></button>
+        <div class="pop-cat" id="popCat"></div>
+        <h3 id="popName"></h3>
+        <p id="popDesc"></p>
+        <div class="pop-actions">
+          <button class="btn btn-primary" id="popGo">Ir aquí</button>
+          <button class="btn btn-ghost" id="popFrom">Salir de aquí</button>
+        </div>
+      </div>
+
+      <div class="fallback" id="fallback" hidden>
+        <h3>Este dispositivo no puede mostrar el mapa 3D</h3>
+        <p>Usa la versión en 2D, que funciona en cualquier celular.</p>
+        <a class="btn btn-primary" href="index.html">Abrir el mapa 2D</a>
+      </div>
+      <div class="loading" id="loading">Cargando el campus…</div>
+    </div>
+
+    <header class="topbar" id="topbar">
+      <img class="brand" src="assets/logo.svg" alt="aLocateUCB" height="30">
+      <div class="spacer"></div>
+      <a class="icon-btn" href="index.html" aria-label="Volver a la versión 2D clásica" data-icon="route"></a>
+    </header>
+
+    <!-- ============ CONTROLES ============ -->
+    <div class="map-ctrls" id="mapCtrls">
+      <div class="seg" role="group" aria-label="Vista del mapa">
+        <button id="btn2d" class="active" aria-pressed="true">2D</button>
+        <button id="btn3d" aria-pressed="false">3D</button>
+      </div>
+      <button class="icon-btn" id="btnZoomIn" aria-label="Acercar" data-icon="plus"></button>
+      <button class="icon-btn" id="btnZoomOut" aria-label="Alejar" data-icon="minus"></button>
+      <button class="icon-btn" id="btnRecenter" aria-label="Ver toda la ruta" data-icon="target"></button>
+      <button class="icon-btn" id="btnSpin" aria-label="Girar el mapa automáticamente" aria-pressed="false" data-icon="spin"></button>
+    </div>
+
+    <!-- ============ GUÍA ============ -->
+    <section class="guide-card" id="guideCard" hidden aria-live="polite" aria-label="Guía paso a paso">
+      <div class="guide-top">
+        <span class="guide-step" id="guideStepLabel">Paso 1 de 1</span>
+        <button class="icon-btn small" id="btnGuideExit" aria-label="Salir de la guía" data-icon="close"></button>
+      </div>
+      <div class="guide-main">
+        <div class="guide-icon" id="guideIcon"></div>
+        <div>
+          <div class="guide-title" id="guideTitle"></div>
+          <div class="guide-detail" id="guideDetail"></div>
+        </div>
+      </div>
+      <div class="guide-bar"><span id="guideProgress"></span></div>
+      <div class="guide-actions">
+        <button class="btn btn-ghost" id="btnGuidePrev">Anterior</button>
+        <button class="btn btn-primary" id="btnGuideNext">Siguiente</button>
+      </div>
+    </section>
+
+    <!-- ============ PANEL ============ -->
+    <section class="sheet" id="sheet" data-snap="half" aria-label="Planificador y chat">
+      <button class="sheet-handle" id="sheetHandle" aria-label="Subir o bajar el panel"><span></span></button>
+      <div class="peek" id="peek">
+        <div>
+          <div class="peek-title" id="peekTitle">¿A dónde vas?</div>
+          <div class="peek-meta" id="peekMeta">Elige un destino</div>
+        </div>
+        <span class="peek-chevron" data-icon="chevron-up"></span>
+      </div>
+
+      <div class="tabs" role="tablist" aria-label="Secciones">
+        <button class="tab active" role="tab" id="tabRoute" aria-selected="true" aria-controls="panelRoute"><span data-icon="route"></span> Ruta</button>
+        <button class="tab" role="tab" id="tabEvents" aria-selected="false" aria-controls="panelEvents"><span data-icon="calendar"></span> Eventos</button>
+        <button class="tab" role="tab" id="tabChat" aria-selected="false" aria-controls="panelChat"><span data-icon="chat"></span> Asistente</button>
+      </div>
+
+      <div class="sheet-body" id="sheetBody">
+
+        <div class="tabpanel" id="panelRoute" role="tabpanel" aria-labelledby="tabRoute">
+          <div class="finder" role="combobox" aria-expanded="false" aria-haspopup="listbox" aria-owns="finderList">
+            <div class="search-box">
+              <span data-icon="search"></span>
+              <input type="search" id="finderInput" placeholder="Busca un aula, bloque o evento (ej. C201)" aria-label="Buscar aula, bloque o evento" aria-autocomplete="list" aria-controls="finderList">
+            </div>
+            <ul class="finder-list" id="finderList" role="listbox" hidden></ul>
+          </div>
+          <button class="btn btn-soft block foto-btn" id="btnFoto" type="button"><span data-icon="camera"></span> Ubicarme con una foto</button>
+          <input type="file" id="fotoInput" accept="image/*" capture="environment" hidden>
+          <div class="planner">
+            <div class="planner-rail" aria-hidden="true"><i class="dot-from"></i><i class="rail-line"></i><i class="dot-to"></i></div>
+            <div class="planner-fields">
+              <label class="field"><span class="field-label">Estás en</span>
+                <span class="select-wrap"><select id="selectOrigin" aria-label="Punto de origen"></select></span></label>
+              <label class="field"><span class="field-label">Vas a</span>
+                <span class="select-wrap"><select id="selectDestination" aria-label="Lugar de destino"></select></span></label>
+            </div>
+            <button class="icon-btn swap" id="btnSwap" aria-label="Intercambiar origen y destino" data-icon="swap"></button>
+          </div>
+
+          <label class="switch" for="chkAccesible">
+            <input type="checkbox" id="chkAccesible">
+            <span class="switch-ui" aria-hidden="true"></span>
+            <span class="switch-text"><strong>Ruta accesible</strong><small>Evita escaleras; usa rampas y ascensores</small></span>
+          </label>
+
+          <div class="result" id="resultBox" aria-live="polite">
+            <div class="summary">
+              <div class="big"><span id="txtMeters">—</span><small>m</small></div>
+              <div class="summary-side"><div class="eta" id="txtEta">—</div><span class="badge" id="accBadge"></span></div>
+            </div>
+            <p class="note" id="txtNote"></p>
+            <button class="btn btn-primary block" id="btnStartGuide" type="button"><span data-icon="play"></span> Empezar guía paso a paso</button>
+            <h4 class="steps-title">Recorrido</h4>
+            <ol class="steps" id="stepsList"></ol>
+          </div>
+          <p class="proto-note">Prototipo: mapa redibujado a partir del plano. Bloques con huella aproximada; <strong>pisos provisionales (3)</strong> salvo el Bloque C (planta baja + 4). Se corrigen desde el editor.</p>
+          <label class="switch small" for="chkPlano" id="planoToggle" hidden>
+            <input type="checkbox" id="chkPlano"><span class="switch-ui" aria-hidden="true"></span>
+            <span class="switch-text"><strong>Comparar con el plano original</strong><small>Superpone la imagen para revisar el redibujo</small></span>
+          </label>
+        </div>
+
+        <div class="tabpanel" id="panelEvents" role="tabpanel" aria-labelledby="tabEvents" hidden>
+          <div class="events" id="eventsList"></div>
+        </div>
+
+        <div class="tabpanel chat" id="panelChat" role="tabpanel" aria-labelledby="tabChat" hidden>
+          <div class="chat-log" id="chatLog" aria-live="polite"></div>
+          <div class="chips" id="chatChips"></div>
+          <form class="chat-form" id="chatForm" autocomplete="off">
+            <input id="chatInput" type="text" placeholder="Escribe: ¿cómo llego a la Biblioteca?" aria-label="Mensaje">
+            <button class="btn btn-primary" type="submit" aria-label="Enviar">Enviar</button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <div class="modal-overlay" id="modalFoto" hidden>
+      <div class="modal-dialog small" role="dialog" aria-modal="true" aria-label="Ubicarme con una foto">
+        <div class="modal-header"><h3>Ubicarme con una foto</h3>
+          <button class="icon-btn small" data-close aria-label="Cerrar" data-icon="close"></button></div>
+        <img id="fotoPreview" class="foto-preview" alt="Foto seleccionada">
+        <p class="muted" id="fotoEstado">Cargando el modelo…</p>
+        <div class="foto-res" id="fotoResultados"></div>
+        <div class="modal-actions" id="fotoAcciones"></div>
+        <p class="menu-foot">El modelo reconoce bloques por su apariencia y puede equivocarse. La foto no sale de tu teléfono.</p>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="mapa3d.js"></script>
+</body>
+
+</html>

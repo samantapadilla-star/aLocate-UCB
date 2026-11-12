@@ -13,7 +13,12 @@
  */
 
 export const FORMAT_ID = 'ucb-nav-project';
-export const FORMAT_VERSION = 1;
+/** v2: las conexiones pueden indicar su tipo (camino, rampa, escaleras, ascensor). Los archivos v1 siguen abriéndose. */
+export const FORMAT_VERSION = 2;
+
+/** Tipo de tramo. «Ruta accesible» evita las escaleras. */
+export type EdgeKind = 'camino' | 'rampa' | 'escaleras' | 'ascensor';
+export const EDGE_KINDS: EdgeKind[] = ['camino', 'rampa', 'escaleras', 'ascensor'];
 
 export interface Point {
   x: number;
@@ -52,6 +57,8 @@ export interface GraphEdge {
   a: string;
   b: string;
   waypoints: Point[];
+  /** Si falta, es «camino». */
+  kind?: EdgeKind;
 }
 
 export interface Floor {

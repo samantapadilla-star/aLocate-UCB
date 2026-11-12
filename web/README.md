@@ -1,4 +1,4 @@
-# UCB Ruta · Plataforma de Navegación y Eventos del Campus UCB
+﻿# UCB Ruta · Plataforma de Navegación y Eventos del Campus UCB
 
 Solución desarrollada para el **Reto FDI: "¿Dónde es el evento?"** en la **Hackathon TECH MECH 2026** (Facultad de Ingeniería Mecatrónica - Universidad Católica Boliviana "San Pablo").
 
@@ -77,4 +77,26 @@ edges: [
    - Botón directo **"🧭 Trazar ruta hacia este evento"** que calcula el trayecto y desplaza la vista hacia el mapa.
 5. **Propuesta de Mantenimiento y Presupuesto (< Bs 500 / mes)**:
    - Modal detallado con el desglose exigido en las bases del reto (Bs 330/mes total con Vercel/Cloudflare Pages gratuito, dominio UCB y placas QR resistentes al clima).
+
+
+---
+
+## Prototipo 2D → 3D con el mapa real (`mapa3d.html`)
+
+Mapa real del campus que empieza en 2D y se "levanta" a 3D, con ruta animada, guía paso a paso y un asistente de demostración.
+
+```powershell
+python -m http.server 8731
+```
+
+Abre http://localhost:8731/mapa3d.html (necesita servidor: usa módulos de JavaScript).
+
+- Datos: `campus/campus.json`, generado con `tools/build_campus_data.py` a partir de un `.ucbnav.json` del editor.
+- El mapa está **redibujado en vectores** (contorno del campus, plazas, áreas verdes y bloques) dentro de `campus/campus.json`; se ve nítido a cualquier zoom. `campus/plano.png` es opcional, solo para «Comparar con el plano original», y **no se sube a Git**.
+- Three.js (MIT) está copiado en `vendor/three/` para que funcione sin internet.
+- Bloques: huellas detectadas del plano o aproximadas, con **pisos provisionales (3)**. Se corregirán desde el editor.
+- «Ingreso» y «Atrio» son puntos provisionales (nodos 1 y 40 del grafo).
+- El asistente es una demostración con reglas simples (sin IA).
+- Aulas y pisos reales: `campus/catalogo.json` (editable a mano). Hoy: Bloque C con planta baja + 4 pisos, Teal 001–005 y C101–C404.
+- Eventos: se leen de `campus/eventos.json` con el formato de `docs/agenda-integracion.md`.
 

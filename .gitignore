@@ -3,10 +3,19 @@ node_modules
 dist
 *.local
 
+# Claves y configuración local (la API key de Groq va en .env y NUNCA se sube)
+.env
+.env.*
+!.env.example
+.claude/
+
 # Entorno Python (laboratorio de visión)
 .venv
 __pycache__
 *.pyc
+
+# Plano institucional usado como textura (se comparte por la carpeta del equipo, no por Git)
+web/campus/plano.png
 
 # Datos que NO deben subirse al repositorio (privacidad / tamaño):
 # planos, fotos de lugares y proyectos exportados con el plano incrustado.

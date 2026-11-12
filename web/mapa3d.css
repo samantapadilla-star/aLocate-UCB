@@ -1,0 +1,83 @@
+/* Estilos propios del visor 2D/3D y del asistente (se suman a style.css) */
+
+.stage { cursor: grab; background: #E3EEF4; }
+.stage:active { cursor: grabbing; }
+#gl { width: 100%; height: 100%; display: block; touch-action: none; outline: none; }
+#labels { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.lbl {
+  position: absolute; left: 0; top: 0; transform: translate(-50%, -50%); white-space: nowrap; pointer-events: none;
+  font-size: 12.5px; font-weight: 800; color: #fff; letter-spacing: .02em;
+  text-shadow: 0 1px 3px rgba(0, 20, 50, .65); transition: opacity .25s;
+}
+.lbl.big { font-size: 16px; }
+.lbl.place { color: var(--navy); text-shadow: 0 0 2px #fff, 0 0 2px #fff, 0 0 3px #fff, 0 0 3px #fff, 0 0 5px #fff; font-size: 13.5px; }
+.lbl.start { color: var(--navy); }
+.lbl.end { color: var(--navy); }
+.lbl.hide { opacity: 0; }
+
+.loading { position: absolute; inset: 0; display: grid; place-items: center; background: #E3EEF4; font-weight: 800; color: var(--blue); z-index: 3; transition: opacity .5s; }
+.loading.done { opacity: 0; pointer-events: none; }
+.fallback { position: absolute; inset: 0; z-index: 4; display: grid; place-content: center; justify-items: center; gap: 12px; text-align: center; padding: 24px; background: var(--bg); }
+.fallback h3 { color: var(--navy); }
+.fallback p { color: var(--muted); margin: 0; }
+
+.map-ctrls { align-items: flex-end; }
+.seg { display: flex; flex-direction: column; background: #fff; border-radius: 23px; box-shadow: var(--shadow-sm); padding: 3px; gap: 2px; }
+.seg button { border: 0; background: none; width: 40px; height: 40px; border-radius: 20px; font-weight: 800; color: var(--muted); transition: background .25s, color .25s, transform .15s var(--ease); }
+.seg button.active { background: var(--blue); color: #fff; }
+.seg button:active { transform: scale(.92); }
+.icon-btn[aria-pressed='true'] { background: var(--yellow); color: var(--navy); }
+a.icon-btn { text-decoration: none; }
+.proto-note { margin: 16px 2px 0; font-size: 12.5px; color: var(--muted); background: var(--yellow-soft); padding: 10px 12px; border-radius: 12px; line-height: 1.45; }
+
+/* ---- Buscador de aulas, bloques y eventos ---- */
+.finder { position: relative; margin-bottom: 12px; }
+.finder-list { list-style: none; margin: 6px 0 0; padding: 6px; background: #fff; border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow-sm); max-height: 300px; overflow-y: auto; animation: fadeUp .2s var(--ease); }
+.finder-list li { display: flex; align-items: center; gap: 12px; padding: 9px 10px; border-radius: 12px; cursor: pointer; }
+.finder-list li[aria-selected='true'], .finder-list li:hover { background: var(--soft); }
+.finder-list .fi-badge { flex: none; min-width: 52px; text-align: center; font-size: 11px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; padding: 4px 8px; border-radius: 999px; background: #E6F0F8; color: var(--blue); }
+.finder-list .fi-badge.ev { background: var(--yellow-soft); color: var(--warn); }
+.finder-list .fi-badge.bl { background: var(--blue); color: #fff; }
+.finder-list strong { display: block; }
+.finder-list small { color: var(--muted); }
+.finder-list .fi-empty { color: var(--muted); cursor: default; }
+.switch.small { padding: 10px 2px 0; }
+.step.floor .step-ico { background: var(--yellow); color: var(--navy); }
+.event-loc-missing { color: var(--warn); font-size: 13px; font-weight: 700; margin: 0 0 10px; }
+
+/* ---- Ubicarme con una foto ---- */
+.foto-btn { margin-bottom: 12px; }
+.foto-preview { width: 100%; max-height: 220px; object-fit: cover; border-radius: 16px; background: var(--soft); }
+.foto-res { display: flex; flex-direction: column; gap: 8px; }
+.foto-row { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; align-items: center; font-size: 14px; }
+.foto-row strong { font-weight: 800; }
+.foto-row .bar { grid-column: 1 / -1; height: 8px; border-radius: 4px; background: var(--soft); overflow: hidden; }
+.foto-row .bar span { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--blue), var(--cyan)); border-radius: 4px; transition: width .8s var(--ease); }
+.foto-row.top strong { color: var(--navy); }
+.foto-row small { color: var(--muted); }
+.foto-verdict { font-size: 17px; font-weight: 800; color: var(--navy); margin: 4px 0 0; }
+.step-photo { display: block; width: 100%; max-width: 240px; border-radius: 12px; margin-top: 8px; }
+.guide-photo { width: 100%; max-height: 140px; object-fit: cover; border-radius: 14px; margin-bottom: 12px; }
+
+/* ---- Asistente (chat) ---- */
+.chat { display: flex; flex-direction: column; gap: 10px; min-height: 100%; }
+.chat-log { display: flex; flex-direction: column; gap: 10px; flex: 1; }
+.msg { max-width: 88%; padding: 10px 14px; border-radius: 18px; line-height: 1.45; font-size: 14.5px; animation: fadeUp .35s var(--ease) both; }
+.msg.bot { align-self: flex-start; background: var(--soft); border-bottom-left-radius: 6px; }
+.msg.user { align-self: flex-end; background: var(--blue); color: #fff; border-bottom-right-radius: 6px; }
+.msg small { display: block; color: var(--muted); margin-top: 4px; font-size: 12px; }
+.msg.bot strong { color: var(--navy); }
+.typing { display: inline-flex; gap: 4px; padding: 4px 2px; }
+.typing i { width: 7px; height: 7px; border-radius: 50%; background: #9DB2C6; animation: blink 1s infinite; }
+.typing i:nth-child(2) { animation-delay: .15s; } .typing i:nth-child(3) { animation-delay: .3s; }
+@keyframes blink { 0%, 80%, 100% { opacity: .25; transform: translateY(0); } 40% { opacity: 1; transform: translateY(-3px); } }
+.route-card { align-self: flex-start; width: min(100%, 320px); background: #fff; border: 1px solid var(--line); border-radius: 18px; padding: 12px 14px; animation: fadeUp .4s var(--ease) both; }
+.route-card .rc-top { display: flex; align-items: baseline; gap: 8px; }
+.route-card .rc-m { font-size: 32px; font-weight: 800; color: var(--blue); letter-spacing: -.02em; }
+.route-card .rc-t { color: var(--muted); font-weight: 700; }
+.route-card ol { margin: 8px 0 12px; padding-left: 18px; font-size: 13.5px; color: var(--ink); }
+.route-card .btn { width: 100%; min-height: 42px; padding: 9px; font-size: 14px; }
+.chat-form { display: flex; gap: 8px; position: sticky; bottom: 0; background: linear-gradient(to top, #fff 75%, rgba(255, 255, 255, 0)); padding-top: 8px; }
+.chat-form input { flex: 1; min-width: 0; border: 2px solid var(--line); border-radius: 14px; padding: 12px 14px; outline: none; background: #fff; }
+.chat-form input:focus { border-color: var(--cyan); }
+.chat-form .btn { padding: 0 18px; }

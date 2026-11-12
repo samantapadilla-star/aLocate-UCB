@@ -29,3 +29,19 @@ npm run dev
 ```
 
 Detalles en `editor/README.md`.
+
+## Flujo para actualizar el mapa (nodos, caminos accesibles)
+
+1. En el editor (`editor/`, `npm run dev`): **Importar proyecto…** → el `.ucbnav.json` actual.
+2. Agrega los nodos que faltan (modo «Crear nodos») y conéctalos (modo «Conectar»).
+3. Selecciona cada conexión y elige su **Tipo de tramo**: Camino, **Rampa / camino accesible**, **Escaleras** o Ascensor.
+   «Ruta accesible» nunca usa tramos de escaleras. Prueba en «Probar ruta» con la casilla «Ruta accesible».
+4. **Exportar proyecto** (formato versión 2; los archivos versión 1 siguen abriéndose).
+5. Regenera los datos de la web:
+
+```powershell
+python tools/build_campus_data.py "RUTA\mapa.ucbnav.json" web/campus
+```
+
+Aulas, pisos y ascensores (con foto) se editan a mano en `web/campus/catalogo.json`; no hace falta regenerar nada.
+El modelo de reconocimiento por fotos está en `web/vision/` (clases → lugares en `web/vision/etiquetas.json`).

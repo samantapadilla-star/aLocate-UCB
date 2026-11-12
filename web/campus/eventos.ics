@@ -1,0 +1,25 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//UCB San Pablo//Eventos//ES
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VEVENT
+UID:evento-247-ucb@ucb.edu.bo
+DTSTAMP:20261112T200159ZZ
+DTSTART;TZID=America/La_Paz:20261125T160000Z
+DTEND;TZID=America/La_Paz:20261125T180000Z
+SUMMARY:Presentación Musicoterapia y Danza
+DESCRIPTION:La Pastoral de Sede y el Proyecto Vencer el Miedo (VEM) ofrecerán una presentación que combina la música y el movimiento como formas de expresión.\n\nOrganizador: Pastoral de Sede 
+LOCATION:Bloque “D”\, 5to. piso\, Paraninfo U.C.B.
+BEGIN:VALARM
+TRIGGER:-PT60M
+ACTION:DISPLAY
+DESCRIPTION:Recordatorio 1 hora antes
+END:VALARM
+BEGIN:VALARM
+TRIGGER:-PT15M
+ACTION:DISPLAY
+DESCRIPTION:Recordatorio 15 minutos antes
+END:VALARM
+END:VEVENT
+END:VCALENDAR

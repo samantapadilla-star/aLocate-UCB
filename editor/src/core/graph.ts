@@ -1,5 +1,5 @@
 import { dist, polylineLength } from './geometry';
-import type { Calibration, Floor, GraphEdge, GraphNode, Point } from './types';
+import type { Calibration, EdgeKind, Floor, GraphEdge, GraphNode, Point } from './types';
 
 /** Identificador corto y único. Siempre se genera FUERA de los reductores (deben ser puros). */
 export function newId(prefix: string): string {
@@ -105,6 +105,18 @@ export function deleteEdge(floor: Floor, id: string): Floor {
 
 export function setWaypoints(floor: Floor, edgeId: string, waypoints: Point[]): Floor {
   return { ...floor, edges: floor.edges.map((e) => (e.id === edgeId ? { ...e, waypoints } : e)) };
+}
+
+export function setEdgeKind(floor: Floor, edgeId: string, kind: EdgeKind): Floor {
+  return {
+    ...floor,
+    edges: floor.edges.map((e) => {
+      if (e.id !== edgeId) return e;
+      const { kind: _old, ...rest } = e;
+      void _old;
+      return kind === 'camino' ? rest : { ...rest, kind };
+    }),
+  };
 }
 
 export function setCalibration(floor: Floor, calibration: Calibration | null): Floor {

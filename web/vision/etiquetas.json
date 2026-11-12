@@ -1,0 +1,18 @@
+{
+  "nota": "Relación entre las clases del modelo de Teachable Machine y los lugares del mapa. 'lugar' = id de lugar en la web (null = todavía no está en el mapa).",
+  "umbral": 0.75,
+  "margen": 0.25,
+  "clases": {
+    "Agora": { "lugar": "agora", "nombre": "Ágora" },
+    "puertaprincipal": { "lugar": "ingreso", "nombre": "Puerta principal" },
+    "Biblioteca": { "lugar": "biblioteca-i", "nombre": "Biblioteca" },
+    "BloqueC": { "lugar": "bloque-c", "nombre": "Bloque C" },
+    "BloqueD": { "lugar": "bloque-d", "nombre": "Bloque D" },
+    "BloqueF": { "lugar": "bloque-f", "nombre": "Bloque F" },
+    "BloqueL": { "lugar": "bloque-l", "nombre": "Bloque L" },
+    "Cafeteria": { "lugar": "cafeteria-h", "nombre": "Cafetería" },
+    "Coliseo": { "lugar": "bloque-a", "nombre": "Coliseo (Bloque A)" },
+    "Entrada": { "lugar": null, "nombre": "Entrada" },
+    "EPC": { "lugar": null, "nombre": "EPC" }
+  }
+}

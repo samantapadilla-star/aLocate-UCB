@@ -2,7 +2,9 @@ import { newId } from './graph';
 import {
   FORMAT_ID,
   FORMAT_VERSION,
+  EDGE_KINDS,
   type Building,
+  type EdgeKind,
   type Calibration,
   type Floor,
   type GraphEdge,
@@ -167,7 +169,12 @@ function readFloor(v: unknown, embedded: Record<string, string>): Floor {
       return fail(`La conexión ${e.id} apunta a un nodo que no existe.`);
     }
     if (e.a === e.b) return fail(`La conexión ${e.id} une un nodo consigo mismo.`);
-    return { id: e.id, a: e.a, b: e.b, waypoints: e.waypoints.map((w) => readPoint(w, `conexión ${e.id}`)) };
+    const edge: GraphEdge = { id: e.id, a: e.a, b: e.b, waypoints: e.waypoints.map((w) => readPoint(w, `conexión ${e.id}`)) };
+    if (e.kind !== undefined && e.kind !== 'camino') {
+      if (!EDGE_KINDS.includes(e.kind as EdgeKind)) return fail(`Tipo de tramo desconocido en la conexión ${e.id}: ${String(e.kind)}.`);
+      edge.kind = e.kind as EdgeKind;
+    }
+    return edge;
   });
 
   return { id: v.id, name: v.name, level: v.level, plan, calibration, nodes, edges };

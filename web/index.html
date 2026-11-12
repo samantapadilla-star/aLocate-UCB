@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UCB Ruta · Navegación Inteligente y Eventos del Campus</title>
+  <meta name="description"
+    content="Plataforma de orientación, eventos y cálculo de rutas óptimas para el campus de la Universidad Católica Boliviana San Pablo.">
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧭</text></svg>">
+</head>
+
+<body>
+
+  <!-- ==================== HEADER ==================== -->
+  <header class="navbar">
+    <div class="brand-wrapper">
+      <div class="brand-logo">UCB</div>
+      <div class="brand-info">
+        <h1>Alocate</h1>
+        <span>Tu campus, sin perderte · Hackathon TECH MECH 2026</span>
+      </div>
+    </div>
+    <nav class="nav-actions">
+      <button class="btn-nav" id="btnOpenQrModal" title="Simulador y Códigos QR">
+        <span>▦</span> Códigos QR
+      </button>
+      <button class="btn-nav" id="btnOpenBudgetModal" title="Presupuesto y Mantenimiento mensual">
+        <span>📋</span> Propuesta & Presupuesto
+      </button>
+      <button class="btn-nav accent" id="btnOpenImportModal" title="Cargar archivo de grafo">
+        <span>🔄</span> Cargar Grafo
+      </button>
+    </nav>
+  </header>
+
+  <!-- ==================== CONTENEDOR PRINCIPAL ==================== -->
+  <main class="main-container">
+
+    <!-- Hero / Encabezado -->
+    <section class="hero-banner">
+      <div class="hero-text">
+        <h2>¿A dónde deseas ir hoy?</h2>
+        <p>Explora actividades académicas y culturales en la UCB y encuentra la ruta más corta, eficiente y accesible
+          hasta tu destino en tiempo real.</p>
+      </div>
+      <div class="hero-pills">
+        <span class="status-chip">
+          <span class="pulse-dot"></span> Algoritmo Dijkstra Activo
+        </span>
+      </div>
+    </section>
+
+    <!-- Grid de Navegación y Mapa -->
+    <div class="app-grid">
+
+      <!-- Panel Izquierdo: Controles de Ruta -->
+      <aside class="panel-controls">
+        <div class="card">
+          <div class="card-title">
+            <span>🧭 Planificador de Ruta</span>
+            <small style="font-size: 11px; font-weight: normal; color: var(--text-muted);" id="nodeCountLabel">10
+              puntos</small>
+          </div>
+
+          <form id="routeForm" onsubmit="event.preventDefault();">
+            <!-- Origen -->
+            <div class="form-field">
+              <label class="field-label" for="selectOrigin">
+                <span class="dot origin"></span> Punto de Origen
+              </label>
+              <div class="select-wrapper">
+                <select id="selectOrigin" class="select-custom" aria-label="Punto de origen"></select>
+                <span class="select-arrow">▼</span>
+              </div>
+            </div>
+
+            <!-- Destino -->
+            <div class="form-field">
+              <label class="field-label" for="selectDestination">
+                <span class="dot destination"></span> Lugar de Destino
+              </label>
+              <div class="select-wrapper">
+                <select id="selectDestination" class="select-custom" aria-label="Lugar de destino"></select>
+                <span class="select-arrow">▼</span>
+              </div>
+            </div>
+
+            <!-- Accesibilidad sin escaleras -->
+            <label class="accessible-box" for="checkAccessible">
+              <input type="checkbox" id="checkAccessible">
+              <div class="accessible-text">
+                <strong>Ruta 100% Accesible</strong>
+                <span>Evitar gradas (priorizar rampas y ascensores)</span>
+              </div>
+            </label>
+
+            <!-- Botones de Acción -->
+            <div class="button-row">
+              <button type="button" class="btn-primary" id="btnCalculate">
+                <span>📍 Trazar Ruta</span>
+              </button>
+              <button type="button" class="btn-icon-secondary" id="btnSwap" title="Intercambiar Origen y Destino"
+                aria-label="Intercambiar Origen y Destino">
+                ⇄
+              </button>
+            </div>
+          </form>
+
+          <!-- Ubicación rápida por código QR -->
+          <div class="qr-box">
+            <div class="qr-header">
+              <h4>▦ Simular Escaneo QR</h4>
+            </div>
+            <p>Toca para simular que escaneas un código QR físico ubicado en estos puntos del campus:</p>
+            <div class="qr-chips" id="qrChipsContainer">
+              <!-- Se pueblan dinámicamente -->
+            </div>
+          </div>
+
+          <!-- Tarjeta de Resultados de la Ruta -->
+          <div class="route-result" id="resultCard" aria-live="polite">
+            <div class="result-header">
+              <span class="algorithm-tag">Dijkstra Óptimo</span>
+              <span class="accessibility-indicator accessible" id="accessibilityBadge">
+                ♿ Accesible
+              </span>
+            </div>
+
+            <div class="metric-display">
+              <div class="metric-big">
+                <span id="txtMeters">—</span> <span>m</span>
+              </div>
+              <div class="eta-badge" id="txtEta">—</div>
+            </div>
+
+            <div class="metric-note" id="txtNote">Selecciona un origen y destino para calcular el recorrido.</div>
+
+            <!-- Pasos detallados -->
+            <div class="steps-wrapper" id="stepsSection">
+              <div class="steps-title">Instrucciones paso a paso</div>
+              <ol class="steps-timeline" id="stepsList"></ol>
+            </div>
+          </div>
+
+        </div>
+      </aside>
+
+      <!-- Panel Derecho: Mapa Interactivo del Campus -->
+      <section class="card map-card" aria-label="Mapa interactivo del campus">
+        <div class="map-toolbar">
+          <div class="card-title" style="margin-bottom: 0;">
+            <span>🗺️ Mapa Interactivo del Campus</span>
+          </div>
+
+          <div class="map-controls">
+            <button class="map-btn" id="btnZoomIn" title="Acercar mapa">+</button>
+            <button class="map-btn" id="btnZoomOut" title="Alejar mapa">−</button>
+            <button class="map-btn" id="btnResetView" title="Restablecer vista">⟲</button>
+          </div>
+        </div>
+
+        <!-- Contenedor del Mapa con Pan y Zoom -->
+        <div class="map-container" id="mapContainer">
+          <div class="map-tooltip" id="mapTooltip"></div>
+          <svg class="map-svg" id="campusSvg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 560">
+            <!-- Capa de Fondos y Áreas Verdes -->
+            <g id="layerBackground">
+              <rect x="0" y="0" width="900" height="560" fill="#E8F2F7" />
+              <!-- Áreas verdes de jardines — tono natura UCB -->
+              <path d="M0,0 L280,0 Q310,120 260,200 L60,280 L0,290 Z" fill="#D2ECDA" />
+              <path d="M680,0 L900,0 L900,240 Q780,210 720,110 Z" fill="#D2ECDA" />
+              <path d="M0,420 Q180,360 320,440 T900,430 L900,560 L0,560 Z" fill="#D2ECDA" />
+            </g>
+
+            <!-- Capa de Edificios / Bloques -->
+            <g id="layerBuildings"></g>
+
+            <!-- Capa de Caminos y Vías Peatonales -->
+            <g id="layerWalkways"></g>
+
+            <!-- Capa de la Ruta Óptima Calculada -->
+            <g id="layerRoute"></g>
+
+            <!-- Capa de Nodos / Puntos de Interés -->
+            <g id="layerNodes"></g>
+          </svg>
+        </div>
+
+        <!-- Leyenda y Notas del Mapa -->
+        <div class="map-footer-info">
+          <div class="legend-list">
+            <span class="legend-item"><span class="legend-dot" style="background: #009DC4;"></span> Origen</span>
+            <span class="legend-item"><span class="legend-dot" style="background: #F5C800;"></span> Destino</span>
+            <span class="legend-item"><span class="legend-line" style="background: #F5C800;"></span> Ruta más
+              corta</span>
+            <span class="legend-item"><span class="legend-line" style="background: #B8D0DB;"></span> Caminos</span>
+            <span class="legend-item"><span class="legend-line"
+                style="background: #E8A99E; border-top: 2px dashed #C0392B;"></span> Escaleras</span>
+          </div>
+          <div class="map-tip">
+            💡 Puedes hacer clic sobre cualquier círculo del mapa para fijarlo como destino.
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- ==================== SECCIÓN DE EVENTOS ==================== -->
+    <section class="events-section" id="eventsSection">
+      <div class="events-header">
+        <div class="events-title-box">
+          <h3>📅 Agenda de Eventos y Actividades UCB</h3>
+          <p>Encuentra conferencias, hackathons, defensas y ferias. Haz clic en "Cómo llegar" para trazar la ruta
+            directa.</p>
+        </div>
+
+        <div class="events-controls">
+          <div class="search-input-wrapper">
+            <span class="search-icon">🔍</span>
+            <input type="search" id="inputSearchEvents" class="search-input" placeholder="Buscar evento o lugar..."
+              aria-label="Buscar evento">
+          </div>
+        </div>
+      </div>
+
+      <!-- Filtro por categorías -->
+      <div class="category-filter-bar" id="categoryFilterBar">
+        <button class="filter-chip active" data-category="all">Todos</button>
+        <button class="filter-chip" data-category="Innovación">Hackathons & Tech</button>
+        <button class="filter-chip" data-category="Académico">Académicos</button>
+        <button class="filter-chip" data-category="Comunidad">Comunidad</button>
+        <button class="filter-chip" data-category="Exposición">Ferias</button>
+      </div>
+
+      <!-- Grid de Eventos -->
+      <div class="events-grid" id="eventsGrid">
+        <!-- Renderizado dinámico desde app.js -->
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ==================== FOOTER ==================== -->
+  <footer class="footer">
+    <div class="footer-content">
+      <div>
+        <strong>UCB Ruta · Solución para el Reto FDI</strong> · Facultad de Ingeniería Mecatrónica UCB San Pablo
+      </div>
+      <div class="footer-links">
+        <a href="#eventsSection">Ver Eventos</a>
+        <a href="#" id="linkBudgetFooter">Presupuesto & Mantenimiento</a>
+        <a href="#" id="linkImportFooter">Cargar Datos de Grafo</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ==================== MODAL: PROPUESTA Y PRESUPUESTO ==================== -->
+  <div class="modal-overlay" id="modalBudget">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3>📋 Propuesta de Implementación y Mantenimiento</h3>
+        <button class="btn-close-modal" data-close="modalBudget">&times;</button>
+      </div>
+      <div>
+        <p style="font-size: 13.5px; color: var(--text-muted); line-height: 1.5; margin-bottom: 16px;">
+          En cumplimiento con los requerimientos del <strong>Reto FDI de la Hackathon TECH MECH 2026</strong>, esta
+          solución ha sido concebida bajo una arquitectura <strong>Serverless & Offline-First</strong>, garantizando
+          costo mínimo, alta disponibilidad y mantenimiento simple por parte de la comunidad universitaria.
+        </p>
+
+        <h4 style="font-size: 15px; margin: 16px 0 8px; color: var(--primary-navy);">💰 Desglose del Presupuesto Mensual
+          (Límite máximo: Bs 500/mes)</h4>
+        <table class="budget-table">
+          <thead>
+            <tr>
+              <th>Concepto</th>
+              <th>Proveedor / Servicio</th>
+              <th>Costo Mensual</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Alojamiento Web & CDN</strong></td>
+              <td>Cloudflare Pages / Vercel (Plan Gratuito Permanente)</td>
+              <td>Bs 0.00</td>
+            </tr>
+            <tr>
+              <td><strong>Dominio Institucional</strong></td>
+              <td>Subdominio <code>ruta.ucb.edu.bo</code> (gestionado por TI UCB)</td>
+              <td>Bs 0.00</td>
+            </tr>
+            <tr>
+              <td><strong>Servicios de Mapas</strong></td>
+              <td>Modelo vectorial propio en SVG + Dijkstra local (sin APIs pagadas)</td>
+              <td>Bs 0.00</td>
+            </tr>
+            <tr>
+              <td><strong>Reposición de Placas QR</strong></td>
+              <td>Impresión en vinilo laminado resistente al clima (4 placas/mes)</td>
+              <td>Bs 80.00</td>
+            </tr>
+            <tr>
+              <td><strong>Incentivo Beca Trabajo / Admin</strong></td>
+              <td>Estudiante administrador para actualizar mapa y eventos (Mecacentro)</td>
+              <td>Bs 250.00</td>
+            </tr>
+            <tr class="total-row">
+              <td><strong>TOTAL MENSUAL ESTIMADO</strong></td>
+              <td><strong>¡Cumple el límite presupuestario con holgura!</strong></td>
+              <td><strong>Bs 330.00 / mes</strong></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h4 style="font-size: 15px; margin: 20px 0 8px; color: var(--primary-navy);">⚙️ ¿Cómo se actualizan los eventos
+          y el mapa?</h4>
+        <ul style="font-size: 13px; color: var(--text-muted); line-height: 1.6; padding-left: 20px;">
+          <li><strong>Actualización de Eventos:</strong> Se integran vía archivo JSON o conectando un Google Sheet
+            público de la Dirección de Asuntos Estudiantiles (DAE).</li>
+          <li><strong>Actualización del Grafo:</strong> Permite agregar nuevas aulas, pisos o bloques editando
+            coordenadas y aristas sin tocar el motor de cálculo.</li>
+          <li><strong>Responsable de Administración:</strong> El Centro de Estudiantes de Mecatrónica (MECACENTRO) junto
+            a la Sociedad Científica de Estudiantes.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL: IMPORTAR / GESTIONAR GRAFO ==================== -->
+  <div class="modal-overlay" id="modalImport">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3>🔄 Cargar / Reemplazar Grafo del Campus</h3>
+        <button class="btn-close-modal" data-close="modalImport">&times;</button>
+      </div>
+      <div class="import-area">
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">
+          Pega a continuación el código JSON con tus <strong>nodos</strong> y <strong>aristas</strong> mapeados del
+          campus para actualizar la plataforma al instante:
+        </p>
+        <textarea id="txtGraphJson" placeholder='{
+  "nodes": {
+    "aula101": { "name": "Aula 101", "short": "A-101", "x": 120, "y": 180, "floor": "PB" }
+  },
+  "edges": [
+    ["entrada", "aula101", 45, "camino"]
+  ]
+}'></textarea>
+        <div class="import-actions">
+          <button class="btn-nav" id="btnResetToDefaultGraph">Restablecer valores por defecto</button>
+          <button class="btn-primary" id="btnApplyCustomGraph" style="max-width: 200px;">Aplicar al Mapa</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL: CÓDIGOS QR ==================== -->
+  <div class="modal-overlay" id="modalQr">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3>▦ Señalética y Códigos QR del Campus</h3>
+        <button class="btn-close-modal" data-close="modalQr">&times;</button>
+      </div>
+      <div>
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">
+          Cada tótem o poste de señalética en el campus contiene una placa con un código QR. Al ser escaneado con la
+          cámara de cualquier teléfono móvil, abre automáticamente esta plataforma precargando la ubicación actual de la
+          persona como punto de partida.
+        </p>
+        <div
+          style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; text-align: center;">
+          <div style="border: 1px solid var(--border-light); padding: 14px; border-radius: 12px; background: #f8fafc;">
+            <div style="font-size: 38px;">📱</div>
+            <strong style="font-size: 13px; display: block; margin: 6px 0;">Entrada Principal</strong>
+            <code style="font-size: 11px; color: var(--primary-blue);">?origen=entrada</code>
+          </div>
+          <div style="border: 1px solid var(--border-light); padding: 14px; border-radius: 12px; background: #f8fafc;">
+            <div style="font-size: 38px;">📱</div>
+            <strong style="font-size: 13px; display: block; margin: 6px 0;">Bloque D (Hall)</strong>
+            <code style="font-size: 11px; color: var(--primary-blue);">?origen=bloqueD</code>
+          </div>
+          <div style="border: 1px solid var(--border-light); padding: 14px; border-radius: 12px; background: #f8fafc;">
+            <div style="font-size: 38px;">📱</div>
+            <strong style="font-size: 13px; display: block; margin: 6px 0;">Cafetería</strong>
+            <code style="font-size: 11px; color: var(--primary-blue);">?origen=cafeteria</code>
+          </div>
+          <div style="border: 1px solid var(--border-light); padding: 14px; border-radius: 12px; background: #f8fafc;">
+            <div style="font-size: 38px;">📱</div>
+            <strong style="font-size: 13px; display: block; margin: 6px 0;">Coliseo UCB</strong>
+            <code style="font-size: 11px; color: var(--primary-blue);">?origen=coliseo</code>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="graph-data.js"></script>
+  <script src="app.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,15 @@
+# Dependencias y compilados
+node_modules
+dist
+*.local
+
+# Entorno Python (laboratorio de visión)
+.venv
+__pycache__
+*.pyc
+
+# Datos que NO deben subirse al repositorio (privacidad / tamaño):
+# planos, fotos de lugares y proyectos exportados con el plano incrustado.
+data/
+photos/
+*.ucbnav.json

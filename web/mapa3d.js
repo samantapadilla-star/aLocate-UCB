@@ -97,14 +97,15 @@ async function loadData() {
     for (const [id, ov] of Object.entries(cat.bloques || {})) {
       const b = d.buildings.find((x) => x.id === id);
       if (b && ov.pisos > 0) { b.floors = ov.pisos; b.floorsProvisional = !!ov.pisosAproximados; b.floorNames = ov.nombresPisos; }
-      if (b) b.elevators = (ov.ascensores || []).filter((x) => x && x.nombre);
+      if (b) { b.elevators = (ov.ascensores || []).filter((x) => x && x.nombre); b.zones = ov.zonas || {}; }
     }
     (cat.ambientes || []).forEach((a) => {
       const b = d.buildings.find((x) => x.id === a.bloque);
       if (!b || !a.codigo) return;
       const tipo = a.tipo || 'aula';
+      const zona = a.zona && b.zones ? (b.zones[a.zona] || a.zona) : null;
       S.places.push({ id: 'aula:' + a.codigo, name: tipo === 'aula' ? `Aula ${a.codigo}` : a.codigo, short: a.codigo, nodeId: b.access,
-        room: { code: a.codigo, tipo, building: b, floor: a.piso | 0, aliases: (a.alias || []).map((x) => norm(x)) } });
+        room: { code: a.codigo, tipo, zona, zonaCorta: a.zona ? a.zona.charAt(0).toUpperCase() + a.zona.slice(1) : null, building: b, floor: a.piso | 0, aliases: (a.alias || []).map((x) => norm(x)) } });
     });
   }
   S.places.forEach((p) => S.placeById.set(p.id, p));
@@ -118,8 +119,16 @@ async function loadData() {
 
 const floorName = (b, f) => (b.floorNames && b.floorNames[f]) || (f === 0 ? 'Planta baja' : `Piso ${f}`);
 /** Texto corto de un destino interior: «C201 · Piso 2» o «Bloque D · Piso 5». */
-const roomLabel = (p) => (p.room.code ? `${p.room.code} · ${floorName(p.room.building, p.room.floor)}` : `${p.room.building.name} · ${floorName(p.room.building, p.room.floor)}`);
-const roomLookFor = (r) => (!r.code ? 'Busca el lugar del evento en ese piso' : r.tipo && r.tipo !== 'aula' ? `Busca el ${r.code}` : `Busca el aula ${r.code}`);
+const roomLabel = (p) => {
+  const r = p.room, fl = floorName(r.building, r.floor);
+  return r.code ? `${r.code} · ${r.zonaCorta ? r.zonaCorta + ', ' : ''}${fl}` : `${r.building.name} · ${fl}`;
+};
+const roomLookFor = (r) => {
+  if (!r.code) return 'Busca el lugar del evento en ese piso';
+  const where = r.zonaCorta ? ` (en los ${r.zonaCorta})` : '';
+  if (r.tipo === 'capilla') return `Busca la ${r.code}${where}`;
+  return r.tipo && r.tipo !== 'aula' ? `Busca el ${r.code}${where}` : `Busca el aula ${r.code}${where}`;
+};
 
 /** Destino «bloque + piso» cuando un evento no trae aula exacta (se crea al vuelo). */
 function floorPlace(b, floor) {
@@ -298,25 +307,49 @@ function buildGraphLines() {
 }
 
 /* ---- marcadores de origen y destino ---- */
+
+/** Personita estilo juguete (cuerpo azul, cabeza amarilla): representa a quien usa la app. */
+function makePerson(scale = 1) {
+  const p = new THREE.Group();
+  const body = new THREE.Mesh(new THREE.CapsuleGeometry(2.4, 4.2, 4, 12), new THREE.MeshStandardMaterial({ color: 0x005289, roughness: 0.55 }));
+  body.position.y = 4.6; body.castShadow = true;
+  const head = new THREE.Mesh(new THREE.SphereGeometry(2.3, 18, 14), new THREE.MeshStandardMaterial({ color: 0xffcc00, roughness: 0.45 }));
+  head.position.y = 10.4; head.castShadow = true;
+  const eyeMat = new THREE.MeshBasicMaterial({ color: 0x0b1f33 });
+  [-0.8, 0.8].forEach((x) => { const e = new THREE.Mesh(new THREE.SphereGeometry(0.35, 8, 6), eyeMat); e.position.set(x, 10.8, 2.1); p.add(e); });
+  p.add(body, head); p.scale.setScalar(scale);
+  return p;
+}
+
 function makeOriginMarker() {
   const g = new THREE.Group();
-  const disc = new THREE.Mesh(new THREE.CylinderGeometry(5.5, 5.5, 1.2, 24), new THREE.MeshBasicMaterial({ color: 0xffffff }));
-  const core = new THREE.Mesh(new THREE.CylinderGeometry(3.2, 3.2, 1.4, 24), new THREE.MeshBasicMaterial({ color: 0x005289 }));
-  disc.position.y = 1.4; core.position.y = 1.7;
-  const ring = new THREE.Mesh(new THREE.RingGeometry(5, 6.5, 40), new THREE.MeshBasicMaterial({ color: 0x005289, transparent: true, opacity: 0.5, side: THREE.DoubleSide }));
-  ring.rotation.x = -Math.PI / 2; ring.position.y = 0.9;
-  g.add(disc, core, ring); g.userData.ring = ring; return g;
+  const puck = new THREE.Mesh(new THREE.CylinderGeometry(7, 7.6, 1.6, 32), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.4 }));
+  puck.position.y = 0.9; puck.receiveShadow = true;
+  const core = new THREE.Mesh(new THREE.CylinderGeometry(5.6, 5.6, 1.8, 32), new THREE.MeshStandardMaterial({ color: 0x005289, roughness: 0.5 }));
+  core.position.y = 1.0;
+  const ring = new THREE.Mesh(new THREE.RingGeometry(7, 8.6, 48), new THREE.MeshBasicMaterial({ color: 0x009dc4, transparent: true, opacity: 0.5, side: THREE.DoubleSide }));
+  ring.rotation.x = -Math.PI / 2; ring.position.y = 0.6;
+  const person = makePerson(0.95); person.position.y = 1.9;
+  g.add(puck, core, ring, person); g.userData.ring = ring; g.userData.person = person; return g;
 }
+
+/** Pin de destino: gota torneada con brillo, aro azul, anillos en el suelo y un haz de luz visible desde lejos en 3D. */
 function makePinMarker() {
   const g = new THREE.Group(); const body = new THREE.Group();
-  const mat = new THREE.MeshStandardMaterial({ color: 0xffcc00, roughness: 0.4, emissive: 0x332800 });
-  const ball = new THREE.Mesh(new THREE.SphereGeometry(7, 24, 18), mat); ball.position.y = 22; ball.castShadow = true;
-  const cone = new THREE.Mesh(new THREE.ConeGeometry(6.6, 15, 24), mat); cone.rotation.x = Math.PI; cone.position.y = 9; cone.castShadow = true;
-  const hole = new THREE.Mesh(new THREE.SphereGeometry(2.8, 14, 10), new THREE.MeshBasicMaterial({ color: 0x003366 })); hole.position.set(0, 22, 4.6);
-  body.add(ball, cone, hole);
-  const shadow = new THREE.Mesh(new THREE.CircleGeometry(5, 20), new THREE.MeshBasicMaterial({ color: 0x003366, transparent: true, opacity: 0.25 }));
-  shadow.rotation.x = -Math.PI / 2; shadow.position.y = 0.9;
-  g.add(body, shadow); g.userData.body = body; return g;
+  const profile = [[0, 0], [1.4, 3], [3.4, 7.5], [5.6, 12.5], [7, 17], [7.4, 20.5], [6.8, 24], [5, 27], [2.6, 28.8], [0, 29.4]].map(([x, y]) => new THREE.Vector2(x, y));
+  const mat = new THREE.MeshStandardMaterial({ color: 0xffcc00, roughness: 0.28, metalness: 0.08, emissive: 0x3d2f00 });
+  const drop = new THREE.Mesh(new THREE.LatheGeometry(profile, 40), mat); drop.castShadow = true;
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(7.5, 0.95, 12, 48), new THREE.MeshStandardMaterial({ color: 0x003366, roughness: 0.4 }));
+  ring.rotation.x = Math.PI / 2; ring.position.y = 20.5;
+  const dot = new THREE.Mesh(new THREE.SphereGeometry(3, 18, 12), new THREE.MeshStandardMaterial({ color: 0x003366, roughness: 0.35 }));
+  dot.position.y = 29.6;
+  body.add(drop, ring, dot);
+  const shadow = new THREE.Mesh(new THREE.CircleGeometry(5.5, 24), new THREE.MeshBasicMaterial({ color: 0x003366, transparent: true, opacity: 0.25 }));
+  shadow.rotation.x = -Math.PI / 2; shadow.position.y = 0.8;
+  const rings = [0, 1].map(() => { const r = new THREE.Mesh(new THREE.RingGeometry(6, 7.4, 48), new THREE.MeshBasicMaterial({ color: 0xffcc00, transparent: true, opacity: 0.6, side: THREE.DoubleSide })); r.rotation.x = -Math.PI / 2; r.position.y = 0.7; return r; });
+  const beam = new THREE.Mesh(new THREE.CylinderGeometry(2.2, 6, 160, 24, 1, true), new THREE.MeshBasicMaterial({ color: 0xffcc00, transparent: true, opacity: 0.16, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending }));
+  beam.position.y = 80;
+  g.add(body, shadow, beam, ...rings); g.userData = { body, rings, beam }; return g;
 }
 
 /* ====================================================================
@@ -377,6 +410,8 @@ function renderRoute() {
   routePts = []; routeLen = 0;
   if (!S.route || S.route.path.length < 2) { walker.visible = false; return; }
   routePts = routePoints(S.route.path); routeLen = polyLength(routePts);
+  // La personita del origen mira hacia el primer tramo
+  if (markers.origin && routePts.length > 1) markers.origin.userData.person.rotation.y = Math.atan2(routePts[1][0] - routePts[0][0], routePts[1][1] - routePts[0][1]);
   routeAnim = { t0: performance.now(), dur: reduceMotion.matches ? 1 : 1100, last: -1 };
   walkerT0 = performance.now() + 1300;
   walker.visible = true;
@@ -395,13 +430,13 @@ function updateRouteReveal(now) {
   if (p >= 1) routeAnim = null;
 }
 
+/** El caminante es la misma personita, más pequeña, que recorre la ruta. */
 function makeWalker() {
   const g = new THREE.Group();
-  const dot = new THREE.Mesh(new THREE.SphereGeometry(3.6, 18, 14), new THREE.MeshStandardMaterial({ color: 0x009dc4, emissive: 0x003a4a, roughness: 0.4 }));
-  dot.position.y = 5; dot.castShadow = true;
-  const halo = new THREE.Mesh(new THREE.CircleGeometry(8, 28), new THREE.MeshBasicMaterial({ color: 0x009dc4, transparent: true, opacity: 0.3 }));
+  const person = makePerson(0.75);
+  const halo = new THREE.Mesh(new THREE.CircleGeometry(7, 28), new THREE.MeshBasicMaterial({ color: 0x009dc4, transparent: true, opacity: 0.3 }));
   halo.rotation.x = -Math.PI / 2; halo.position.y = 1.6;
-  g.add(dot, halo); g.visible = false; return g;
+  g.add(person, halo); g.visible = false; return g;
 }
 
 function updateWalker(now) {
@@ -410,7 +445,9 @@ function updateWalker(now) {
   const secs = clamp(routeLen / 60, 4, 10);
   const t = ((now - walkerT0) / (secs * 1000)); if (t < 0) { walker.position.set(routePts[0][0], 0, routePts[0][1]); return; }
   const u = (t % 1.3) / 1.3, d = Math.min(1, u * 1.15) * routeLen; const [x, z] = pointAt(routePts, d);
-  walker.position.set(x, 0, z); walker.children[0].position.y = 5 + Math.sin(now / 160) * 0.8;
+  const [px, pz] = pointAt(routePts, Math.max(0, d - 3));
+  walker.position.set(x, 0, z); walker.children[0].position.y = Math.abs(Math.sin(now / 140)) * 1.4;
+  if (x !== px || z !== pz) walker.rotation.y = Math.atan2(x - px, z - pz); // mira hacia donde camina
 }
 
 /* ====================================================================
@@ -561,20 +598,78 @@ function openPop(b) {
   $('popCat').textContent = `Bloque · ${b.floors} pisos${b.floorsProvisional ? ' (provisional)' : ''}`;
   $('popName').textContent = b.name;
   const acc = S.nodes.get(b.access);
-  $('popDesc').textContent = `Acceso más cercano: Nodo ${acc.n}. Huella ${b.source === 'auto' ? 'detectada del plano' : 'aproximada'}; se corrige desde el editor.`;
+  const rooms = S.places.filter((p) => p.room && p.room.code && p.room.building === b);
+  $('popDesc').textContent = rooms.length
+    ? `${rooms.length} ambientes registrados. Acceso más cercano en el grafo: Nodo ${acc.n}.`
+    : `Acceso más cercano: Nodo ${acc.n}. Huella ${b.source === 'auto' ? 'detectada del plano' : 'aproximada'}; se corrige desde el editor.`;
+  // Pisos y ascensores del bloque (con foto para reconocerlos)
+  const extra = $('popExtra'); extra.innerHTML = '';
+  if (b.floorNames && !b.floorsProvisional) extra.insertAdjacentHTML('beforeend', `<div class="pop-floors">${b.floorNames.map((n) => `<span>${esc(n)}</span>`).join('')}</div>`);
+  const elevs = b.elevators || [];
+  if (elevs.length) {
+    extra.insertAdjacentHTML('beforeend', `<h4>Ascensores (${elevs.length})</h4>`);
+    elevs.forEach((e) => {
+      const div = document.createElement('div'); div.className = 'elev';
+      div.innerHTML = `${e.foto ? `<img src="${esc(e.foto)}" alt="Foto: ${esc(e.nombre)}" loading="lazy">` : '<span></span>'}
+        <div><strong>${esc(e.nombre)}</strong><small>${esc(e.ubicacion || '')}</small>
+        <small>${e.desdePiso ? `Parte desde ${esc(floorName(b, e.desdePiso))}` : 'Desde planta baja'}</small>
+        ${e.posicionAproximada ? '<small class="approx">Punto del mapa aproximado</small>' : ''}</div>`;
+      const img = div.querySelector('img'); if (img) img.addEventListener('click', () => zoomPhoto(e.foto, e.nombre));
+      extra.appendChild(div);
+    });
+  }
+  $('nodePop').classList.toggle('wide', elevs.length > 0);
+  showElevatorMarkers(b);
   $('nodePop').hidden = false; $('nodePop').dataset.place = place.id; positionPop();
-  buildingGroups.forEach((g) => { g.userData.top.emissive.setHex(g.userData.b === b ? 0x553f00 : 0x000000); g.userData.side.emissive.setHex(g.userData.b === b ? 0x332600 : 0x000000); });
+  buildingGroups.forEach((g) => highlight(g, g.userData.b === b));
 }
+/** Resalta un bloque: techo teñido de amarillo y paredes con un leve brillo. */
+const HIGHLIGHT = new THREE.Color(0xffcc00);
+function highlight(g, on) {
+  const u = g.userData;
+  if (!u.topColor) u.topColor = u.top.color.clone();
+  u.top.color.copy(on ? u.topColor.clone().lerp(HIGHLIGHT, 0.45) : u.topColor);
+  u.side.emissive.setHex(on ? 0x332600 : 0x000000);
+}
+
+function zoomPhoto(src, alt) {
+  const z = document.createElement('div'); z.className = 'photo-zoom'; z.setAttribute('role', 'dialog'); z.setAttribute('aria-label', alt);
+  z.innerHTML = `<img src="${esc(src)}" alt="${esc(alt)}">`; z.addEventListener('click', () => z.remove());
+  $('app').appendChild(z);
+}
+
+/** Marcadores de ascensor (columna cian) del bloque tocado o del bloque destino. */
+let elevGroup = null;
+function showElevatorMarkers(b) {
+  if (elevGroup) { elevGroup.parent && elevGroup.parent.remove(elevGroup); elevGroup = null; }
+  const g = buildingGroups.find((x) => x.userData.b === b);
+  const list = (b && b.elevators || []).filter((e) => Number.isFinite(e.x) && Number.isFinite(e.y));
+  if (!g || !list.length) return;
+  elevGroup = new THREE.Group();
+  const h = g.userData.h * 1.08;
+  list.forEach((e) => {
+    const shaft = new THREE.Mesh(new THREE.BoxGeometry(7, h, 7), new THREE.MeshStandardMaterial({ color: 0x009dc4, emissive: 0x00495c, transparent: true, opacity: 0.9 }));
+    shaft.position.set(e.x, h / 2, e.y);
+    const cap = new THREE.Mesh(new THREE.BoxGeometry(9, 1.5, 9), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+    cap.position.set(e.x, h + 0.8, e.y);
+    elevGroup.add(shaft, cap);
+  });
+  g.add(elevGroup); // dentro del grupo del bloque: sube y baja con él (2D/3D)
+}
+
 function hidePop() {
   S.popBuilding = null; $('nodePop').hidden = true;
-  buildingGroups.forEach((g) => { g.userData.top.emissive.setHex(0); g.userData.side.emissive.setHex(0); });
+  const dp = S.placeById.get(S.dest); showElevatorMarkers(dp && dp.room && S.accessible ? dp.room.building : null);
+  buildingGroups.forEach((g) => highlight(g, false));
 }
 function positionPop() {
   const g = buildingGroups.find((x) => x.userData.b === S.popBuilding); if (!g) return;
   project(new THREE.Vector3(g.userData.center.x, g.userData.h * rise, g.userData.center.z), scr);
-  const pop = $('nodePop'), w = pop.offsetWidth, h = pop.offsetHeight, W = window.innerWidth, H = window.innerHeight;
-  let top = scr.y - h - 20; if (top < 78) top = scr.y + 24;
-  pop.style.left = clamp(scr.x - w / 2, 12, W - w - 12) + 'px'; pop.style.top = clamp(top, 78, H - h - 12) + 'px';
+  // La tarjeta se queda dentro del área libre del mapa (nunca debajo del panel)
+  const pop = $('nodePop'), w = pop.offsetWidth, h = pop.offsetHeight, f = freeRect();
+  const minX = f.x, maxX = Math.max(f.x, f.x + f.w + 54 - w), minY = Math.max(78, f.y), maxY = Math.max(minY, f.y + f.h - h);
+  let top = scr.y - h - 20; if (top < minY) top = scr.y + 24;
+  pop.style.left = clamp(scr.x - w / 2, minX, maxX) + 'px'; pop.style.top = clamp(top, minY, maxY) + 'px';
 }
 $('popClose').addEventListener('click', hidePop);
 $('popGo').addEventListener('click', () => { const id = $('nodePop').dataset.place; hidePop(); setDest(id); });
@@ -633,6 +728,7 @@ function renderMarkers() {
   const dp = S.placeById.get(S.dest);
   if (S.dest !== S.origin) mk(dp.room ? roomLabel(dp) : dp.short, 'end', d, 44);
   renderFloorBand(dp);
+  if (!S.popBuilding) showElevatorMarkers(dp && dp.room && S.accessible ? dp.room.building : null);
 }
 
 /** Si el destino es un aula, resalta su piso dentro del bloque (franja amarilla a la altura del nivel). */
@@ -658,7 +754,8 @@ function renderFloorBand(place) {
  */
 function verticalStep(place) {
   const r = place.room, b = r.building, look = roomLookFor(r);
-  const elev = (b.elevators || [])[0];
+  // Para la ruta accesible sirve el ascensor que arranca en planta baja; si no hay, el primero registrado
+  const elev = (b.elevators || []).find((e) => !e.desdePiso) || (b.elevators || [])[0];
   const photo = elev && elev.foto ? elev.foto : null, photoAlt = elev ? `${elev.nombre} del ${b.name}` : '';
   if (!r.floor) return { icon: 'pin', title: 'Está en planta baja', detail: look, photo: null };
   if (S.accessible) {
@@ -709,7 +806,7 @@ function currentGuideRig() {
 function startGuide(i = 0) {
   if (!S.steps.length) return;
   S.guide.active = true; $('guideCard').hidden = false; $('sheet').dataset.snap = 'peek'; setSnapVar('peek');
-  walker.visible = true; walker.children[0].position.y = 5;
+  walker.visible = true; walker.children[0].position.y = 0;
   goGuide(clamp(i, 0, S.steps.length), true);
 }
 function goGuide(i, instant = false) {
@@ -838,7 +935,8 @@ function searchItems() {
     return {
       kind: p.room ? 'aula' : 'lugar', place: p, keys: [...keys].filter(Boolean),
       title: p.room ? p.room.code : p.name,
-      sub: p.room ? `${p.room.building.name} · ${floorName(p.room.building, p.room.floor)}` : p.provisional ? 'Punto de referencia (provisional)' : 'Bloque del campus'
+      badge: p.room ? ({ laboratorio: 'Lab', auditorio: 'Auditorio', capilla: 'Capilla' }[p.room.tipo] || 'Aula') : 'Lugar',
+      sub: p.room ? `${p.room.building.name}${p.room.zonaCorta ? ' · ' + p.room.zonaCorta : ''} · ${floorName(p.room.building, p.room.floor)}` : p.provisional ? 'Punto de referencia (provisional)' : 'Bloque del campus'
     };
   });
   S.events.forEach((ev) => items.push({ kind: 'evento', ev, keys: [squash(ev.titulo)], title: ev.titulo, sub: `${ev.fechaTexto}${ev.place ? ' · ' + ev.place.short : ' · ubicación por confirmar'}` }));
@@ -866,7 +964,7 @@ function renderFinder() {
   if (!finderResults.length) list.innerHTML = '<li class="fi-empty">Sin resultados. Prueba con «C201», «Teal 3» o «Biblioteca».</li>';
   finderResults.forEach((it, i) => {
     const li = document.createElement('li'); li.setAttribute('role', 'option'); li.setAttribute('aria-selected', i === finderSel);
-    const badge = it.kind === 'aula' ? '<span class="fi-badge">Aula</span>' : it.kind === 'evento' ? '<span class="fi-badge ev">Evento</span>' : '<span class="fi-badge bl">Lugar</span>';
+    const badge = it.kind === 'aula' ? `<span class="fi-badge">${esc(it.badge)}</span>` : it.kind === 'evento' ? '<span class="fi-badge ev">Evento</span>' : '<span class="fi-badge bl">Lugar</span>';
     li.innerHTML = `${badge}<span><strong>${esc(it.title)}</strong><small>${esc(it.sub)}</small></span>`;
     li.addEventListener('mousedown', (e) => { e.preventDefault(); pickResult(it); });
     list.appendChild(li);
@@ -1011,6 +1109,7 @@ function findRoomMentions(text) {
   const t = ` ${norm(text)} `, out = [];
   const push = (code, index) => { const p = S.placeById.get('aula:' + code); if (p && !out.some((o) => o.id === p.id)) out.push({ id: p.id, index, room: true }); };
   for (const m of t.matchAll(/\b([a-l])\s?-?\s?(\d{3})\b/g)) push(m[1].toUpperCase() + m[2], m.index);
+  for (const m of t.matchAll(/\b([a-l])-?(\d{1,2})\b/g)) push(m[1].toUpperCase() + m[2], m.index); // D1…D30
   for (const m of t.matchAll(/\bteal\s?-?\s?0*(\d{1,3})\b/g)) push('TEAL ' + m[1].padStart(3, '0'), m.index);
   for (const m of t.matchAll(/\b(?:aula|salon|ambiente)\s+(\d{3})\b/g)) {
     const hits = S.places.filter((p) => p.room && p.room.code && p.room.code.replace(/\D/g, '') === m[1]);
@@ -1125,9 +1224,46 @@ function showPhotoResults(res) {
   }
 }
 
-$('chatForm').addEventListener('submit', (e) => { e.preventDefault(); const v = $('chatInput').value.trim(); if (!v) return; addMsg(v, 'user'); $('chatInput').value = ''; reply(v); });
+/* ---- Asistente con IA (Groq, a través de server/servidor.mjs). Si no está disponible, se usan las reglas. ---- */
+const chatAI = { on: false, model: null, history: [] };
+async function checkAI() {
+  try { const r = await fetch('/api/salud', { cache: 'no-store' }); if (r.ok) { const j = await r.json(); chatAI.on = !!j.ia; chatAI.model = j.modelo; } } catch (_) { /* sin servidor */ }
+  $('chatStatus').innerHTML = chatAI.on
+    ? `<span class="dot on"></span> Asistente con IA · Groq (${esc(chatAI.model)}). Elige lugares solo del mapa.`
+    : '<span class="dot"></span> Modo sin IA (reglas simples). Para usar Groq, abre la app con <code>node server/servidor.mjs</code> y pon la clave en <code>server/.env</code>.';
+}
+async function replyAI(text) {
+  const t = document.createElement('div'); t.className = 'msg bot'; t.innerHTML = '<span class="typing"><i></i><i></i><i></i></span>'; log.appendChild(t);
+  $('sheetBody').scrollTop = $('sheetBody').scrollHeight;
+  try {
+    const r = await fetch('/api/chat', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mensaje: text, historial: chatAI.history.slice(-6), contexto: { origen: S.origin, accesible: S.accessible } })
+    });
+    const out = await r.json();
+    if (!r.ok) throw new Error(out.error || `Error ${r.status}`);
+    t.remove();
+    addMsg(esc(out.respuesta)); // la respuesta de la IA se muestra como texto, nunca como HTML
+    if (out.descartada) addMsg('<small>Ese lugar no está en el mapa, así que no tracé ninguna ruta. Prueba con un bloque, un aula o la Biblioteca.</small>');
+    chatAI.history.push({ rol: 'usuario', texto: text }, { rol: 'asistente', texto: out.respuesta });
+    const a = out.accion;
+    if (a && a.tipo === 'accesible') { S.accessible = !!a.valor; $('chkAccesible').checked = S.accessible; recalc({ fly: false }); }
+    if (a && a.tipo === 'ruta') {
+      const o = S.placeById.get(a.origen || S.origin), d = S.placeById.get(a.destino);
+      if (o && d && o.id !== d.id) { const rr = dijkstra(o.nodeId, d.nodeId); if (rr) routeCard(o, d, rr); else addMsg('No encontré un camino entre esos lugares en el mapa actual.'); }
+    }
+    if (a && a.tipo === 'info') { const p = S.placeById.get(a.lugar); if (p && p.room) addMsg(`<small>${esc(roomLabel(p))} · ${esc(p.room.building.name)}</small>`); }
+  } catch (err) {
+    t.remove();
+    addMsg(`<small>La IA no respondió (${esc(err.message)}). Te respondo con las reglas simples.</small>`);
+    reply(text);
+  }
+  $('sheetBody').scrollTop = $('sheetBody').scrollHeight;
+}
+const ask = (v) => (chatAI.on ? replyAI(v) : reply(v));
+$('chatForm').addEventListener('submit', (e) => { e.preventDefault(); const v = $('chatInput').value.trim(); if (!v) return; addMsg(v, 'user'); $('chatInput').value = ''; ask(v); });
 const CHIPS = ['¿Dónde queda la C201?', 'Estoy en el Ingreso, llévame a la Teal 3', '¿Cómo llego a la Biblioteca?', '¿Qué es la C304?'];
-CHIPS.forEach((c) => { const b = document.createElement('button'); b.className = 'chip'; b.type = 'button'; b.textContent = c; b.addEventListener('click', () => { addMsg(c, 'user'); reply(c); }); $('chatChips').appendChild(b); });
+CHIPS.forEach((c) => { const b = document.createElement('button'); b.className = 'chip'; b.type = 'button'; b.textContent = c; b.addEventListener('click', () => { addMsg(c, 'user'); ask(c); }); $('chatChips').appendChild(b); });
 addMsg('Hola, soy el asistente de <strong>aLocateUCB</strong>. <small>Demostración con reglas simples, sin IA todavía: entiendo frases como «¿cómo llego a la Biblioteca?».</small>');
 
 /* ====================================================================
@@ -1147,8 +1283,17 @@ function frame(now) {
   clampTarget();
   // Marcadores: tamaño legible a cualquier distancia
   const k = clamp(camera.position.distanceTo(controls.target) / 420, 0.75, 2.6);
-  if (markers.origin) { markers.origin.scale.set(k, 1, k); const p = (now % 2000) / 2000; markers.origin.userData.ring.scale.setScalar(1 + p * 1.8); markers.origin.userData.ring.material.opacity = 0.55 * (1 - p); }
-  if (markers.dest) { markers.dest.scale.setScalar(k); markers.dest.userData.body.position.y = Math.abs(Math.sin(now / 420)) * 4 * k; }
+  if (markers.origin) { markers.origin.scale.setScalar(k); const p = (now % 2000) / 2000; markers.origin.userData.ring.scale.setScalar(1 + p * 1.8); markers.origin.userData.ring.material.opacity = 0.55 * (1 - p); }
+  if (markers.dest) {
+    const u = markers.dest.userData;
+    markers.dest.scale.setScalar(k);
+    u.body.position.y = Math.abs(Math.sin(now / 420)) * 4;
+    u.body.rotation.y = now / 1400;
+    u.rings.forEach((r, i) => { const p = ((now / 1800) + i * 0.5) % 1; r.scale.setScalar(1 + p * 2.2); r.material.opacity = 0.6 * (1 - p); });
+    u.beam.visible = rise > 0.5; // el haz de luz solo en 3D, para ubicar el destino desde lejos
+    u.beam.material.opacity = 0.12 + Math.sin(now / 500) * 0.04;
+  }
+  if (markers.origin) markers.origin.userData.person.position.y = 1.9 + Math.abs(Math.sin(now / 900)) * 0.6;
   if (walker) walker.scale.setScalar(k);
   // Niebla suave: en 3D lo lejano se funde con el fondo (no se "ve" más allá del campus)
   if (scene.fog) { const dd = camera.position.distanceTo(controls.target); scene.fog.near = dd * 0.95; scene.fog.far = dd * 2.1; }
@@ -1161,7 +1306,7 @@ async function boot() {
   const texture = await new Promise((res) => new THREE.TextureLoader().load('campus/plano.png', (t) => { t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = renderer.capabilities.getMaxAnisotropy(); res(t); }, undefined, () => res(null)));
   setupLights(); buildBase(texture); buildBuildings(); applyRise(); buildGraphLines();
   scene.fog = new THREE.Fog(0xe3eef4, 800, 2400);
-  loadEvents();
+  loadEvents(); checkAI();
   markers.origin = makeOriginMarker(); markers.dest = makePinMarker(); walker = makeWalker(); world.add(markers.origin, markers.dest, walker);
   fillSelects(); resize(); setSnap(isDesktop.matches ? 'half' : 'half');
   // Vista inicial: todo el campus en 2D, y luego la cámara vuela hasta la ruta

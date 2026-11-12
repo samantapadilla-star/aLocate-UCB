@@ -1,19 +1,41 @@
 {
-  "version": 1,
-  "nota": "Catálogo editable a mano. 'pisos' es el número total de niveles contando la planta baja. 'piso' de un ambiente: 0 = planta baja. Solo se publican códigos de aula, no oficinas ni nombres de personas.",
-  "notaAscensores": "Cada ascensor: nombre, ubicacion (texto opcional, p. ej. 'junto a la escalera principal') y foto (ruta, p. ej. 'campus/fotos/ascensor-c.jpg'). La foto se muestra en el último paso cuando se activa 'Ruta accesible'.",
+  "version": 2,
+  "nota": "Catálogo editable a mano. 'pisos' = niveles contando la planta baja. 'piso' de un ambiente: 0 = planta baja. Solo se publican aulas, laboratorios, auditorios y espacios de eventos; no oficinas ni nombres de personas.",
+  "notaAscensores": "Cada ascensor: nombre, ubicacion (texto), foto (ruta), desdePiso (0 = planta baja) y x,y en píxeles del plano. Si posicionAproximada es true, el punto del mapa es una estimación hecha desde la descripción: corrígelo cuando lo midan.",
   "bloques": {
     "bloque-c": {
       "pisos": 5,
       "nombresPisos": ["Planta baja", "Piso 1", "Piso 2", "Piso 3", "Piso 4"],
-      "ascensores": [{ "nombre": "Ascensor del Bloque C", "ubicacion": null, "foto": null }]
+      "ascensores": [
+        {
+          "nombre": "Ascensores del Bloque C (2 puertas)",
+          "ubicacion": "A la altura de la entrada del Bloque B, un poco hacia dentro del Bloque C",
+          "foto": "campus/fotos/ascensor-c.jpg",
+          "desdePiso": 0,
+          "x": 352, "y": 47, "posicionAproximada": true
+        }
+      ]
     },
     "bloque-d": {
       "pisos": 6,
-      "pisosAproximados": true,
-      "notaPisos": "Al menos planta baja + 5 pisos: la agenda ubica el Paraninfo en el 5to. piso. Confirmar el total.",
       "nombresPisos": ["Planta baja", "Piso 1", "Piso 2", "Piso 3", "Piso 4", "Piso 5"],
-      "ascensores": [{ "nombre": "Ascensor del Bloque D", "ubicacion": null, "foto": null }]
+      "zonas": { "anexos": "Anexos (la parte que sobresale del Bloque D)" },
+      "ascensores": [
+        {
+          "nombre": "Ascensores de la entrada del Bloque G (2 puertas)",
+          "ubicacion": "En la entrada pequeña a la que se llega desde el Bloque G",
+          "foto": "campus/fotos/ascensor-d-entrada-g.jpg",
+          "desdePiso": 0,
+          "x": 108, "y": 284, "posicionAproximada": true
+        },
+        {
+          "nombre": "Ascensor del fondo",
+          "ubicacion": "Más al fondo del bloque, hacia arriba a la derecha (no en la esquina). Parte desde el Piso 1",
+          "foto": "campus/fotos/ascensor-d-fondo.jpg",
+          "desdePiso": 1,
+          "x": 102, "y": 190, "posicionAproximada": true
+        }
+      ]
     }
   },
   "ambientes": [
@@ -40,6 +62,42 @@
     { "codigo": "C402", "bloque": "bloque-c", "piso": 4 },
     { "codigo": "C403", "bloque": "bloque-c", "piso": 4 },
     { "codigo": "C404", "bloque": "bloque-c", "piso": 4 },
-    { "codigo": "Paraninfo", "bloque": "bloque-d", "piso": 5, "tipo": "auditorio", "alias": ["paraninfo", "paraninfo ucb"] }
+
+    { "codigo": "D1", "bloque": "bloque-d", "piso": 0 },
+    { "codigo": "D2", "bloque": "bloque-d", "piso": 0 },
+    { "codigo": "D23", "bloque": "bloque-d", "piso": 0, "zona": "anexos" },
+    { "codigo": "D24", "bloque": "bloque-d", "piso": 0, "zona": "anexos" },
+    { "codigo": "Lab 4", "bloque": "bloque-d", "piso": 0, "tipo": "laboratorio", "alias": ["lab 4", "laboratorio 4"] },
+    { "codigo": "D3", "bloque": "bloque-d", "piso": 1 },
+    { "codigo": "D4", "bloque": "bloque-d", "piso": 1 },
+    { "codigo": "D5", "bloque": "bloque-d", "piso": 1 },
+    { "codigo": "D6", "bloque": "bloque-d", "piso": 1 },
+    { "codigo": "D7", "bloque": "bloque-d", "piso": 1 },
+    { "codigo": "Lab. Psicología", "bloque": "bloque-d", "piso": 1, "tipo": "laboratorio", "alias": ["lab psicologia", "laboratorio de psicologia", "laboratorio psicologia"] },
+    { "codigo": "D8", "bloque": "bloque-d", "piso": 2 },
+    { "codigo": "D9", "bloque": "bloque-d", "piso": 2 },
+    { "codigo": "D10", "bloque": "bloque-d", "piso": 2 },
+    { "codigo": "D11", "bloque": "bloque-d", "piso": 2 },
+    { "codigo": "D12", "bloque": "bloque-d", "piso": 2 },
+    { "codigo": "Auditorio 2", "bloque": "bloque-d", "piso": 2, "tipo": "auditorio", "alias": ["aud 2", "aud2", "auditorio 2"] },
+    { "codigo": "Lab. Redes", "bloque": "bloque-d", "piso": 2, "tipo": "laboratorio", "zona": "anexos", "alias": ["lab redes", "laboratorio de redes", "laboratorio redes"] },
+    { "codigo": "D27", "bloque": "bloque-d", "piso": 2, "zona": "anexos" },
+    { "codigo": "D13", "bloque": "bloque-d", "piso": 3 },
+    { "codigo": "D14", "bloque": "bloque-d", "piso": 3 },
+    { "codigo": "D15", "bloque": "bloque-d", "piso": 3 },
+    { "codigo": "D16", "bloque": "bloque-d", "piso": 3 },
+    { "codigo": "D17", "bloque": "bloque-d", "piso": 3 },
+    { "codigo": "Auditorio 3", "bloque": "bloque-d", "piso": 3, "tipo": "auditorio", "alias": ["aud 3", "aud3", "auditorio 3"] },
+    { "codigo": "D25", "bloque": "bloque-d", "piso": 3, "zona": "anexos" },
+    { "codigo": "D18", "bloque": "bloque-d", "piso": 4 },
+    { "codigo": "D19", "bloque": "bloque-d", "piso": 4 },
+    { "codigo": "D20", "bloque": "bloque-d", "piso": 4 },
+    { "codigo": "D21", "bloque": "bloque-d", "piso": 4 },
+    { "codigo": "D22", "bloque": "bloque-d", "piso": 4 },
+    { "codigo": "Auditorio 4", "bloque": "bloque-d", "piso": 4, "tipo": "auditorio", "alias": ["aud 4", "aud4", "auditorio 4"] },
+    { "codigo": "D29", "bloque": "bloque-d", "piso": 5 },
+    { "codigo": "D30", "bloque": "bloque-d", "piso": 5 },
+    { "codigo": "Paraninfo", "bloque": "bloque-d", "piso": 5, "tipo": "auditorio", "alias": ["paraninfo", "paraninfo ucb"] },
+    { "codigo": "Capilla Mayor", "bloque": "bloque-d", "piso": 5, "tipo": "capilla", "alias": ["capilla mayor"] }
   ]
 }

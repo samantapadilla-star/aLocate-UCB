@@ -45,3 +45,22 @@ python tools/build_campus_data.py "RUTA\mapa.ucbnav.json" web/campus
 
 Aulas, pisos y ascensores (con foto) se editan a mano en `web/campus/catalogo.json`; no hace falta regenerar nada.
 El modelo de reconocimiento por fotos está en `web/vision/` (clases → lugares en `web/vision/etiquetas.json`).
+
+## Asistente con IA (Groq)
+
+La clave **nunca** va en la web: la usa un servidor pequeño (`server/servidor.mjs`, Node 18+, sin dependencias) que también sirve la página.
+
+```powershell
+cd server
+copy .env.example .env
+notepad .env
+```
+
+Pon tu clave en `GROQ_API_KEY=...` (el archivo `.env` no se sube a GitHub). Luego, desde `server/`:
+
+```powershell
+node servidor.mjs
+```
+
+Abre http://localhost:8787/mapa3d.html. La pestaña «Asistente» mostrará «Asistente con IA · Groq». Sin clave o sin servidor, usa las reglas simples.
+La IA solo puede elegir lugares de la lista del mapa; el servidor descarta cualquier lugar inventado y la ruta la calcula la web.
